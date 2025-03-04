@@ -35,7 +35,7 @@ export async function getManifest() {
       48: './assets/logo.png',
       128: './assets/logo.png',
     },
-    permissions: ['storage'],
+    permissions: ['storage', 'activeTab', 'scripting', 'contextMenus'],
     // host_permissions: ['*://chatgpt.com/*'],
     externally_connectable: {
       matches: ["*://knollapp.com/*", "*://localhost/*"],
@@ -43,9 +43,7 @@ export async function getManifest() {
     }, 
     content_scripts: [
       {
-        // matches: ['*://chatgpt.com/*', '*://knollapp.com/*', '*://api.knollapp.com/*', "*://localhost/*"],
-        // matches: ['*://chatgpt.com/*', '*://knollapp.com/*', '*://api.knollapp.com/*', '*://embed.knollapp.com/*', '*://claude.ai/*'],
-        matches: ['*://chatgpt.com/*', '*://knollapp.com/*', '*://api.knollapp.com/*', '*://embed.knollapp.com/*', '*://claude.ai/*', "*://localhost/*"],
+        matches: ['*://knollapp.com/*', '*://api.knollapp.com/*', "*://localhost/*"],
         js: [
           'dist/contentScripts/index.global.js',
           'dist/contentScripts/config.js',

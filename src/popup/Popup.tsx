@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Selector } from './components/Selector';
 import Box from "@mui/material/Box";
+import { Button, Divider, Alert } from "@mui/material";
+import Select, { SelectChangeEvent } from '@mui/material/Select';
 import CircularProgress from '@mui/material/CircularProgress';
 import Typography from "@mui/material/Typography";
 import Grid from '@mui/material/Grid2';
-import { Footer } from './components/Footer';
+import MenuItem from '@mui/material/MenuItem';
+import FormControl from '@mui/material/FormControl';
+
 import { Login } from "./components/Login";
 import { ThemeProvider } from "@mui/material";
 import theme from "./theme";
@@ -12,103 +16,155 @@ import theme from "./theme";
 
 export const Popup = () => {
   const [modules, setModules] = useState([])
-  const [communities, setCommunities] = useState([])
-  const [allModules, setAllModules] = useState([])
-  const [userChecked, setChecked] = useState({})
   const [user, setUser] = useState("")
-  const [isLoading, setLoading] = useState(true)
-  const filterItems = (event) => {
-    const searchTerm = event.target.value
-    const filteredModules = allModules.filter(module =>
-        module.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        module.description.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setModules(filteredModules)
+  const [selected, setSelected] = useState('');
+  const [clipped, setClipped] = useState('')
+  const [isSuccess, setSuccess] = useState(undefined)
+  const [link, setLink] = useState('')
+  const [isLoading, setLoading] = useState(undefined)
+
+  const handleChange = (event: SelectChangeEvent) => {
+    setSelected(event.target.value);
+  };
+
+  function saveContent() {
+    browser.runtime.sendMessage({type: "add_content", data: {user: user, content: clipped, module: selected}})
+    .then(response => {
+      console.log(response)
+      if (response?.success) {
+        console.log('Success')
+        setSuccess(true)
+        setLink(response.link)
+        // navigate to saved
+      } else {
+        setSuccess(false)
+        console.log('Failure')
+      }
+    })
+  }
+
+  function openLink() {
+    browser.tabs.update({
+      url: link
+    })
   }
 
   document.addEventListener('DOMContentLoaded', async(event) => {
     const syncData = await browser.storage.sync.get("uid")
     const uid = syncData?.uid
+    
     setUser(uid);
-    // setModules([]);
-    // setAllModules([]);
-    // setLoading(false);
     if (uid) {
-      browser.runtime.sendMessage({ type: 'popup_open', data: {user: uid} })
-      .then(response => {
-        console.log('Response in popup', response, response.checked)
-        if (response.success) {
-          setModules(response.response.modules)
-          setAllModules(response.response.modules)
-          if (response.response.checked) {
-            setChecked(response.response.checked)
-          }
+      browser.storage.session.get("modules").then((result) => {
+        if (result && result.length > 0) {
+          console.log(result)
+        } else {
+          browser.runtime.sendMessage({ type: 'popup_open', data: {user: uid} })
+          .then(response => {
+            console.log('Response in popup', response, response.checked)
+            if (response.success) {
+              setModules(response.response.modules)
+              browser.storage.session.set({"modules": response.response.modules})
+            }
+          })
         }
-        // if (response.communities.success) {
-        //   setCommunities(response.communities.response)
-        // }
-        setUser(uid)
-        setLoading(false)
+        browser.storage.local.get("clipped").then((result) => {
+          console.log(result)
+          if ("clipped" in result) {
+            setClipped(result['clipped'])
+          }
+        })
       })
     } else {
       console.log("No user")
-      setLoading(false)
     }
   });
 
-  const reloadModules = () => {
-    console.log('Reload')
-    browser.runtime.sendMessage({ type: 'popup_open', data: {user: user} })
-      .then(response => {
-        console.log('Response in popup', response, response.checked)
-        if (response.modules.success) {
-          setModules(response.modules.response)
-          setAllModules(response.modules.response)
-        }
-      })
-    }
+
+
 
   return (
     <ThemeProvider theme={theme}>
-      {
-        isLoading ? (
-          <Box>
-            <Grid sx={{height: '100vh'}} container justifyContent="center" alignItems="center" direction="column">
-              <Grid>
-                <CircularProgress color="secondary" />
-              </Grid>
-              <Grid>
-                <Typography variant="h5">
-                  Loading
-                </Typography>
-              </Grid>
-            </Grid>
-          </Box>
-        ) : (
-          <Box sx={{width: "100%"}}>
         {
           user ? (
-            <Box>
-              <Selector 
-                user={user}
-                modules={modules}
-                communities={communities}
-                checked={userChecked}
-                filterItems={filterItems}
-                reloadModules={reloadModules}
-              />
-              {/* <Footer/> */}
-            </Box>
+            <Grid container direction="column" spacing={1} alignItems="center">
+                <Grid size={11} sx={{m: 1}}>
+                  <Typography variant="body1">
+                    <strong>
+                      CLIPPED TEXT
+                    </strong>
+                  </Typography>
+                  <Box sx={{backgroundColor: "#f2f2f2", p: 1, maxHeight: "150px", overflowY: "scroll"}}>
+                    <Typography variant="body2">
+                      {clipped}
+                    </Typography>
+                  </Box>
+                </Grid>
+                <Grid size={12}>
+                  <Divider/>
+                </Grid>
+                <Grid size={12}>
+                  <Grid container alignItems="center" justifyContent="space-around" spacing={1}>
+                    <Grid size={2}>
+                      <Typography variant="body2">
+                        Add to
+                      </Typography>
+                    </Grid>
+                    <Grid size={8}>
+                      <FormControl sx={{ m: 1, minWidth: "100%" }} size="small">
+                        <Select
+                          labelId="demo-select-small-label"
+                          id="demo-select-small"
+                          value={selected}
+                          label="Module"
+                          fullWidth
+                          onChange={handleChange}
+                        >
+                          {
+                            modules.map((module) => {
+                              if (module) {
+                                return (
+                                  <MenuItem value={module.id}>{module.name}</MenuItem>
+                                )
+                              }
+                            })
+                          }
+                        </Select>
+                      </FormControl>
+                    </Grid>
+                  </Grid>
+                </Grid>
+                <Grid size={12}>
+                  <Divider/>
+                </Grid>
+                {console.log(modules)}
+                <Grid sx={{pl:1, pb: 1}} size={6}>
+                  <Button fullWidth size="small" variant="contained" onClick={saveContent}>
+                    Save Content
+                  </Button>
+                </Grid>
+                {
+                  isSuccess === true ? (
+                    <Grid sx={{pl:1, pb: 1}}  size={6}>
+                      <Button fullWidth variant="outlined" size="small" onClick={openLink}>
+                        View updated module
+                      </Button>
+                  </Grid> 
+                  ) : isSuccess === false ? (
+                    <Grid sx={{pl:1, pb: 1}}  size={6}>
+                      <Alert severity="error">
+                        Sorry, there was an error updating the module.
+                      </Alert>
+                  </Grid>
+                  ) : null
+                }
+            </Grid>
           ) : (
             <Box>
               <Login/>
             </Box>
           )
         }
-        {console.log('in popup', userChecked)}
-      </Box>
-        )
-      }
     </ThemeProvider>
   )
 };

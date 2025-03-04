@@ -1,4 +1,3 @@
-import { resolve } from "path";
 import { sendMessage } from "webext-bridge";
 import { Tabs } from "webextension-polyfill";
 import browser from "webextension-polyfill";
@@ -47,6 +46,11 @@ if (import.meta.hot) {
 
 browser.runtime.onInstalled.addListener(({ reason }): void => {
   console.log('Extension installed')
+  browser.contextMenus.create({
+    id: "clipSelectedText",
+    title: "Clip Selected Text",
+    contexts: ["selection"]
+  });
   if (reason === 'install') {
     const today = new Date(); // Get the current date
     const oneWeekFromNow = new Date();
@@ -138,67 +142,34 @@ browser.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     return new Promise((resolve, reject) => {
       resolve(null)
     })
-  }
-  else if (request.type === 'sent_message') {
-    console.log('Message sent')
+  } else if (request.type === 'add_content') {
+    console.log("Add content")
     return new Promise((resolve, reject) => {
-      // Update number of messages sent (currently 1 one at time).
-      // TODO: Batch updates after every X amount of time
-      userServices
-        .updateLogs(request.data)
-        .then((response) => {
-          resolve(response)
-        })
-        .catch((error) => {
-          console.error(error)
-          resolve({});
-        });
-    });
-  }
-  else if (request.type === 'query_gpt') {
-    return new Promise((resolve, reject) => {
-      gptServices
-        .queryGPT(request.data)
-        .then((response) => {
-          console.log('Resolve GPT', response)
-          resolve(response)
-        })
-        .catch((error) => {
-          console.error(error)
-          resolve({})
-        })
-    })
-  }
-  else if (request.type === 'query_embeddings') {
-    return new Promise((resolve, reject) => {
-      gptServices
-        .queryEmbeddings(request.data)
-        .then((response) => {
-          console.log('Resolve GPT', response)
-          resolve(response)
-        })
-        .catch((error) => {
-          console.error(error)
-          resolve({})
-        })
-    })
-  }
-  else if (request.type === 'query_embeddings_chunks') {
-    return new Promise((resolve, reject) => {
-      gptServices
-        .queryEmbeddingsChunks(request.data)
-        .then((response) => {
-          console.log('Resolve GPT', response)
-          resolve(response)
-        })
-        .catch((error) => {
-          console.error(error)
-          resolve({})
-        })
+      moduleServices
+      .addContent(request.data)
+      .then((response) => {
+        resolve(response)
+      })
+      .catch((error) => {
+        console.error(error)
+        resolve({})
+      })
     })
   }
 });
 
+// handle browser menu clicks
+browser.contextMenus.onClicked.addListener(function(info, tab) {
+  if (info.menuItemId === "clipSelectedText") {
+    const selectedText = info.selectionText;
+    browser.storage.local.set({"clipped": selectedText}).then(() => {
+      return new Promise((resolve, reject) => {
+        resolve(null)
+      })
+    });
+
+  }
+});
 
  // let storedData:Cache = {}
     // browser.storage.local.get(['modules', 'communities']).then((result) => {

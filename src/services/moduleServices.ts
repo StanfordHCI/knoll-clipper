@@ -73,5 +73,17 @@ export default {
                 }
             })
         })
+    },
+
+    async addContent(data: Object) {
+        console.log('add content')
+        return new Promise((resolve, reject) => {
+            axios.post(`${constants.SERVER_API}/addKnowledge`, data)
+            .then(response => {
+                if (response.data) {
+                    resolve({success: true, link: response.data.link})
+                }
+            })
+        })
     }
 }
