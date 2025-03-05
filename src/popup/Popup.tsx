@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Selector } from './components/Selector';
 import Box from "@mui/material/Box";
-import { Button, Divider, Alert } from "@mui/material";
+import { Button, Divider, Alert, CircularProgress } from "@mui/material";
 import Select, { SelectChangeEvent } from '@mui/material/Select';
-import CircularProgress from '@mui/material/CircularProgress';
 import Typography from "@mui/material/Typography";
 import Grid from '@mui/material/Grid2';
 import MenuItem from '@mui/material/MenuItem';
@@ -19,15 +18,19 @@ export const Popup = () => {
   const [user, setUser] = useState("")
   const [selected, setSelected] = useState('');
   const [clipped, setClipped] = useState('')
-  const [isSuccess, setSuccess] = useState(undefined)
+  const [isSuccess, setSuccess] = useState('')
+  const [error, setError] = useState('')
   const [link, setLink] = useState('')
-  const [isLoading, setLoading] = useState(undefined)
+  const [isLoading, setLoading] = useState(false)
 
   const handleChange = (event: SelectChangeEvent) => {
+    setError('')
+    setSuccess('')
     setSelected(event.target.value);
   };
 
   function saveContent() {
+    setLoading(true)
     browser.runtime.sendMessage({type: "add_content", data: {user: user, content: clipped, module: selected}})
     .then(response => {
       console.log(response)
@@ -35,9 +38,11 @@ export const Popup = () => {
         console.log('Success')
         setSuccess(true)
         setLink(response.link)
-        // navigate to saved
+        setLoading(false)
       } else {
         setSuccess(false)
+        setError(response?.error)
+        setLoading(false)
         console.log('Failure')
       }
     })
@@ -129,13 +134,12 @@ export const Popup = () => {
                         Add to
                       </Typography>
                     </Grid>
-                    <Grid size={8}>
-                      <FormControl sx={{ m: 1, minWidth: "100%" }} size="small">
+                    <Grid size={7}>
+                      <FormControl sx={{ m: 1, width: "200px"}} size="small">
                         <Select
                           labelId="demo-select-small-label"
                           id="demo-select-small"
                           value={selected}
-                          label="Module"
                           fullWidth
                           onChange={handleChange}
                         >
@@ -143,7 +147,11 @@ export const Popup = () => {
                             modules.map((module) => {
                               if (module) {
                                 return (
-                                  <MenuItem value={module.id}>{module.name}</MenuItem>
+                                  <MenuItem sx={{display: 'block'}} value={module.id}>
+                                      <div style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
+                                        {module.name}
+                                      </div>
+                                  </MenuItem>
                                 )
                               }
                             })
@@ -156,23 +164,30 @@ export const Popup = () => {
                 <Grid size={12}>
                   <Divider/>
                 </Grid>
-                {console.log(modules)}
                 <Grid sx={{pl:1, pb: 1}} size={6}>
-                  <Button fullWidth size="small" variant="contained" onClick={saveContent}>
-                    Save Content
-                  </Button>
+                  {
+                    isLoading ? (
+                      <Button fullWidth size="small" variant="contained" onClick={saveContent} disabled>
+                        <CircularProgress size={20}/>
+                      </Button>
+                    ) : (
+                      <Button fullWidth size="small" variant="contained" onClick={saveContent}>
+                        Save Content
+                      </Button>
+                    )
+                  }
                 </Grid>
                 {
                   isSuccess === true ? (
                     <Grid sx={{pl:1, pb: 1}}  size={6}>
                       <Button fullWidth variant="outlined" size="small" onClick={openLink}>
-                        View updated module
+                        View updated module 
                       </Button>
                   </Grid> 
                   ) : isSuccess === false ? (
-                    <Grid sx={{pl:1, pb: 1}}  size={6}>
+                    <Grid sx={{pl:1, pb: 1}}  size={8}>
                       <Alert severity="error">
-                        Sorry, there was an error updating the module.
+                        {error}
                       </Alert>
                   </Grid>
                   ) : null

@@ -38,12 +38,13 @@ export async function getManifest() {
     permissions: ['storage', 'activeTab', 'scripting', 'contextMenus'],
     // host_permissions: ['*://chatgpt.com/*'],
     externally_connectable: {
-      matches: ["*://knollapp.com/*", "*://localhost/*"],
-      // matches: ["*://knollapp.com/*"],
+      // matches: ["*://knollapp.com/*", "*://localhost/*"],
+      matches: ["*://knollapp.com/*"],
     }, 
     content_scripts: [
       {
-        matches: ['*://knollapp.com/*', '*://api.knollapp.com/*', "*://localhost/*", "*://x.com/*", "*://twitter.com/*",],
+        // matches: ['*://knollapp.com/*', '*://api.knollapp.com/*', "*://localhost/*", "*://x.com/*", "*://twitter.com/*",],
+        matches: ['*://knollapp.com/*', '*://api.knollapp.com/*', "*://x.com/*", "*://twitter.com/*",],
         js: [
           'dist/contentScripts/index.global.js',
           'dist/contentScripts/config.js',

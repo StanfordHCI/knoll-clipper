@@ -84,6 +84,10 @@ export default {
                     resolve({success: true, link: response.data.link})
                 }
             })
+            .catch(error => {
+                const response = error?.response
+                resolve({success: false, error: response.data.error})
+            })
         })
     }
 }
