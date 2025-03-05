@@ -68,6 +68,25 @@ export const Popup = () => {
             }
           })
         }
+
+        browser.tabs.query({active: true, currentWindow: true})
+        .then(tabs => {
+            let currentTab = tabs[0];
+            let currentUrl = currentTab.url;
+            
+            if (currentUrl.includes('x.com') && currentUrl.includes('status')) {
+              browser.storage.local.get("tweetInfo").then((result) => {
+                console.log('Tweet Info', result)
+                if ("tweetInfo" in result) {
+                  let tweetInfo = JSON.parse(result.tweetInfo)
+                  tweetInfo = tweetInfo.join('\n')
+                  setClipped(tweetInfo)
+                }
+              })
+            }
+        });
+
+
         browser.storage.local.get("clipped").then((result) => {
           console.log(result)
           if ("clipped" in result) {

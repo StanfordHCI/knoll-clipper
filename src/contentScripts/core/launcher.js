@@ -1,7 +1,7 @@
 const eventsManager = new EventsManager()
 Globals.tab_id = uuidv4()
 
-if (location.href.includes('x.com')) {
+if (location.href.includes('x.com')  || location.href.includes('twitter.com') ) {
   // We are on Twitter
   chrome.storage.sync.get(['uid'], (items) => {
     let user_id = items.uid

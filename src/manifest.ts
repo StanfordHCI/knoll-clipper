@@ -43,7 +43,7 @@ export async function getManifest() {
     }, 
     content_scripts: [
       {
-        matches: ['*://knollapp.com/*', '*://api.knollapp.com/*', "*://localhost/*"],
+        matches: ['*://knollapp.com/*', '*://api.knollapp.com/*', "*://localhost/*", "*://x.com/*", "*://twitter.com/*",],
         js: [
           'dist/contentScripts/index.global.js',
           'dist/contentScripts/config.js',

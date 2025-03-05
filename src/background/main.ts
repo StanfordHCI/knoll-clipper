@@ -5,6 +5,7 @@ import constants from '~/services/constants';
 import moduleServices from '~/services/moduleServices';
 import userServices from '~/services/userServices';
 import gptServices from '~/services/gptServices';
+import { parseTweet } from "~/background/utils";
 
 interface Cache {
   [key: any]: any;
@@ -155,6 +156,24 @@ browser.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         resolve({})
       })
     })
+  } else if (request.type === 'get_tweet') {
+    console.log('Get Tweet', request.data)
+    if (request.data) {
+      const tweet = request.data?.response 
+      const parsedTweet = parseTweet(tweet)
+      console.log('Parsed Tweet', parsedTweet)
+      if (!parsedTweet.isError) {
+        console.log(JSON.stringify(parsedTweet.tweetThread))
+        browser.storage.local.set({"tweetInfo": JSON.stringify(parsedTweet.tweetThread)}).then(() => {
+          return new Promise((resolve, reject) => {
+            resolve(null)
+          })
+        });
+      }
+    }
+    return new Promise((resolve, reject) => {
+      resolve(null)
+    })
   }
 });
 
@@ -167,6 +186,7 @@ browser.contextMenus.onClicked.addListener(function(info, tab) {
         resolve(null)
       })
     });
+    browser.action.openPopup();
 
   }
 });

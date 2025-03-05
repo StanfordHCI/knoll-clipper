@@ -6,6 +6,14 @@ function observeMessages() {
   return
 }
 
+window.addEventListener("get_tweet", function (evt) {
+  console.log('Details', evt.detail)
+  browser.runtime.sendMessage({
+    type: "get_tweet",
+    data: evt.detail
+  })
+}, false);
+
 document.addEventListener('DOMContentLoaded', observeMessages);
 (() => {
   console.info("[vitesse-webext] Hello world from content script");
